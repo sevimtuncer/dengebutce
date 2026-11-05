@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Denge">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Denge — Kişisel Bütçe</title>
+<style>
+:root{--bg:#f3f5f8;--panel:#fff;--ink:#172033;--muted:#718096;--line:#e6eaf0;--navy:#101827;--green:#16794b;--red:#bd4141;--blue:#315fbd;--amber:#9a6815}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px system-ui,-apple-system,Segoe UI,sans-serif;padding-bottom:86px}
+header{background:var(--navy);color:#fff;padding:22px 18px 18px;position:sticky;top:0;z-index:3}
+.top{display:flex;justify-content:space-between;align-items:center}.brand{font-weight:750;font-size:20px;letter-spacing:.2px}.month{font-size:13px;color:#c5cede}
+main{max-width:620px;margin:auto;padding:16px}.screen{display:none}.screen.active{display:block}
+h2{font-size:18px;margin:8px 0 12px}h3{font-size:15px;margin:0 0 8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:12px}
+.hero{background:var(--navy);color:#fff;border-radius:18px;padding:18px;margin-bottom:12px}
+.eyebrow{font-size:12px;color:#aebbd0}.big{font-size:31px;font-weight:750;letter-spacing:-1px;margin:5px 0}
+.sub{font-size:12px;color:var(--muted)}.hero .sub{color:#c2ccda}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{background:#f7f9fb;border-radius:12px;padding:12px}.metric strong{display:block;font-size:19px;margin-top:5px}.positive{color:var(--green)}.negative{color:var(--red)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}.row:last-child{border:0}
+.row small{display:block;color:var(--muted);font-size:12px;margin-top:3px}.amount{font-weight:700;white-space:nowrap}
+.pill{font-size:11px;padding:4px 8px;border-radius:20px;background:#edf1f6;color:#536174}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom));z-index:5}
+nav button{border:0;background:none;color:#7a8494;font-size:11px;padding:5px 9px;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav button b{font-size:19px;font-weight:500}nav button.active{color:var(--blue);font-weight:700}
+button,.btn{border:0;border-radius:11px;padding:12px 14px;background:var(--blue);color:#fff;font-weight:650;font-size:14px}
+button.secondary{background:#edf1f6;color:#27364c}button.danger{background:#fff0f0;color:var(--red)}
+input,select{width:100%;border:1px solid #dce2ea;border-radius:10px;padding:12px;font:inherit;background:#fff;color:var(--ink);min-width:0}
+label{display:block;font-size:12px;color:#5d6879;margin:10px 0 5px}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/-1}
+.actions{display:flex;gap:8px;margin-top:14px}.actions button{flex:1}
+.quick{display:flex;gap:8px}.quick input{flex:1}.quick button{white-space:nowrap}
+.note{font-size:12px;color:var(--muted);line-height:1.45}.empty{padding:18px;text-align:center;color:var(--muted);font-size:13px}
+.bar{height:8px;background:#edf0f4;border-radius:20px;overflow:hidden;margin-top:7px}.bar span{display:block;height:100%;background:#4774c9;border-radius:20px}
+.sectionhead{display:flex;justify-content:space-between;align-items:center;margin:18px 0 9px}
+.link{background:none;color:var(--blue);padding:4px;font-size:13px}
+</style>
+</head>
+<body>
+<header><div class="top"><div class="brand">Denge</div><div class="month" id="monthLabel"></div></div></header>
+<main>
+<section id="home" class="screen active">
+ <div class="hero">
+  <div class="eyebrow">ÖDEME SONRASI HARCAMA KAPASİTESİ</div>
+  <div class="big" id="capacity">₺0</div>
+  <div class="sub" id="capacityCaption">Gelir ve ödeme takvimini eklediğinde hesaplanır.</div>
+ </div>
+ <div class="grid">
+  <div class="card metric"><span class="sub">Nakit + banka bakiyesi</span><strong id="totalBalance">₺0</strong></div>
+  <div class="card metric"><span class="sub">Sonraki gelir</span><strong id="nextIncome">—</strong><span class="sub" id="nextIncomeDate"></span></div>
+  <div class="card metric"><span class="sub">Yaklaşan ödemeler</span><strong id="upcomingDue">₺0</strong><span class="sub" id="dueCaption">Önümüzdeki 30 gün</span></div>
+  <div class="card metric"><span class="sub">Günlük harcama sınırı</span><strong id="dailyLimit">₺0</strong><span class="sub" id="dailyCaption">Bir sonraki gelire kadar</span></div>
+ </div>
+ <div class="sectionhead"><h2>Yaklaşan nakit akışı</h2><button class="link" onclick="show('calendar')">Tümünü gör</button></div>
+ <div class="card" id="timeline"></div>
+ <div class="sectionhead"><h2>Hızlı harcama</h2></div>
+ <div class="card">
+  <div class="quick"><input id="quickEntry" inputmode="decimal" placeholder="15 TL su"><button onclick="quickAdd()">Ekle</button></div><div style="margin-top:9px"><label>Ödeme hesabı</label><select id="quickAccount"></select></div>
+  <div class="note" style="margin-top:8px">Tutarı ve kısa açıklamayı gir. Kategori ve hesap detayını istersen daha sonra düzenleyebilirsin.</div>
+ </div>
+ <div class="sectionhead"><h2>Son işlemler</h2><button class="link" onclick="show('transactions')">Tümü</button></div>
+ <div class="card" id="recent"></div>
+</section>
+<section id="transactions" class="screen">
+ <h2>İşlemler</h2>
+ <div class="card">
+  <div class="formgrid">
+   <div><label>İşlem türü</label><select id="txType"><option value="expense">Harcama</option><option value="income">Gelir</option></select></div>
+   <div><label>Tutar (₺)</label><input id="txAmount" inputmode="decimal" placeholder="0"></div>
+   <div class="full"><label>Açıklama</label><input id="txName" placeholder="Örn. Market alışverişi"></div>
+   <div><label>Kategori</label><select id="txCategory"></select></div>
+   <div><label>Hesap</label><select id="txAccount"></select></div>
+   <div><label>Tarih</label><input id="txDate" type="date"></div>
+  </div>
+  <div class="actions"><button onclick="addTransaction()">İşlemi kaydet</button></div>
+ </div>
+ <div class="card" id="allTransactions"></div>
+</section>
+<section id="calendar" class="screen">
+ <h2>Gelir ve ödeme takvimi</h2>
+ <p class="note">Beklenen gelirleri ve ödeme tarihlerini önceden ekle. Kredi kartı ekstresini, kesim tarihini ve son ödeme tarihini ayrı takip edebilirsin.</p>
+ <div class="card">
+  <h3>Yeni planlı hareket</h3>
+  <div class="formgrid">
+   <div><label>Tür</label><select id="planType"><option value="income">Gelir</option><option value="expense">Ödeme</option></select></div>
+   <div><label>Tutar (₺)</label><input id="planAmount" inputmode="decimal" placeholder="0"></div>
+   <div class="full"><label>Açıklama</label><input id="planName" placeholder="Maaş, burs, kira, kredi kartı..."></div>
+   <div><label>Tarih</label><input id="planDate" type="date"></div>
+   <div><label>Tekrar</label><select id="planRepeat"><option value="once">Tek seferlik</option><option value="monthly">Her ay</option></select></div>
+  </div>
+  <div class="actions"><button onclick="addPlan()">Takvime ekle</button></div>
+ </div>
+ <div class="card"><h3>Planlanan hareketler</h3><div id="plans"></div></div>
+ <div class="card">
+  <h3>Kredi kartı tarihleri</h3>
+  <div class="formgrid">
+   <div><label>Kart adı</label><input id="cardName" placeholder="Örn. Ana kredi kartı"></div>
+   <div><label>Ekstre kesim günü</label><input id="cardClose" type="number" min="1" max="31" placeholder="15"></div>
+   <div><label>Son ödeme günü</label><input id="cardDue" type="number" min="1" max="31" placeholder="25"></div>
+   <div><label>Kart hesabı</label><select id="cardAccount"></select></div>
+  </div>
+  <div class="actions"><button onclick="addCard()">Kartı kaydet</button></div>
+  <div id="cards"></div>
+  <div class="sectionhead"><h3>Kredi kartı ekstresi ödeme</h3></div>
+  <div class="formgrid"><div><label>Kredi kartı</label><select id="payCard"></select></div><div><label>Ödeme yapılacak banka hesabı</label><select id="payBank"></select></div><div><label>Ödeme tutarı (₺)</label><input id="payAmount" inputmode="decimal" placeholder="0"></div><div><label>Ödeme tarihi</label><input id="payDate" type="date"></div></div>
+  <div class="actions"><button onclick="payCardBill()">Kart borcunu öde</button></div><div id="cardPayments"></div>
+ </div>
+</section>
+<section id="accounts" class="screen">
+ <h2>Hesaplar ve bütçe</h2>
+ <div class="card"><h3>Hesap bakiyeleri</h3><div id="accountsList"></div></div>
+ <div class="card">
+  <h3>Hesap ekle</h3><div class="formgrid">
+   <div><label>Hesap adı</label><input id="accountName" placeholder="Nakit, banka, kredi kartı..."></div>
+   <div><label>Tür</label><select id="accountType"><option>Nakit</option><option>Banka</option><option>Kredi kartı</option></select></div>
+   <div class="full"><label>Mevcut bakiye (₺)</label><input id="accountBalance" inputmode="decimal" placeholder="0"></div>
+  </div><div class="actions"><button onclick="addAccount()">Hesap ekle</button></div>
+ </div>
+ <div class="card"><h3>Aylık kategori limitleri</h3><div id="budgets"></div>
+  <div class="formgrid"><div><label>Kategori</label><select id="budgetCategory"></select></div><div><label>Aylık limit (₺)</label><input id="budgetAmount" inputmode="decimal" placeholder="0"></div></div>
+  <div class="actions"><button onclick="addBudget()">Limit belirle</button></div>
+ </div>
+</section>
+<section id="more" class="screen">
+ <h2>Diğer</h2>
+ <div class="card"><h3>Kategoriler</h3><p class="note">Gıda alt kategorileri ayrı tutulur: su, kahve ve yemek. Abonelikler ve abonman aynı gruptadır.</p><div id="categoryList"></div></div>
+ <div class="card"><h3>Abonelikler ve abonman</h3>
+  <div class="formgrid">
+   <div class="full"><label>Ad</label><input id="subName" placeholder="Örn. Ulaşım abonmanı, Spotify"></div>
+   <div><label>Tutar (₺)</label><input id="subAmount" inputmode="decimal" placeholder="0"></div>
+   <div><label>Ödeme günü</label><input id="subDay" type="number" min="1" max="31" placeholder="1-31"></div>
+  </div><div class="actions"><button onclick="addSubscription()">Abonelik ekle</button></div><div id="subs"></div>
+ </div>
+ <div class="card"><h3>Birikim</h3><p class="note">Ana ekranda gösterilmez. İhtiyaç duyduğunda hedef ve birikim kaydı oluşturabilirsin.</p>
+  <div class="formgrid"><div class="full"><label>Hedef adı</label><input id="goalName" placeholder="Örn. Acil durum fonu"></div><div><label>Hedef tutar (₺)</label><input id="goalTarget" inputmode="decimal"></div><div><label>Mevcut birikim (₺)</label><input id="goalSaved" inputmode="decimal"></div></div><div class="actions"><button onclick="addGoal()">Hedef ekle</button></div><div id="goals"></div>
+ </div>
+ <div class="card"><h3>Veri yönetimi</h3><p class="note">Veriler yalnızca bu tarayıcının yerel hafızasında saklanır. Tarayıcı verilerini silersen kayıtlar da silinebilir. Düzenli yedek al.</p><div class="actions"><button class="secondary" onclick="exportData()">Yedek indir</button><button class="secondary" onclick="document.getElementById('importFile').click()">Yedek yükle</button><input id="importFile" type="file" accept="application/json" hidden onchange="importData(event)"></div></div>
+</section>
+</main>
+<nav>
+ <button class="active" data-screen="home" onclick="show('home')"><b>⌂</b>Özet</button>
+ <button data-screen="transactions" onclick="show('transactions')"><b>＋</b>İşlemler</button>
+ <button data-screen="calendar" onclick="show('calendar')"><b>◷</b>Takvim</button>
+ <button data-screen="accounts" onclick="show('accounts')"><b>▤</b>Hesaplar</button>
+ <button data-screen="more" onclick="show('more')"><b>•••</b>Diğer</button>
+</nav>
+<script>
+const KEY='denge_budget_v1';
+const cats=['Gıda / Su','Gıda / Kahve','Gıda / Yemek','Market','Ulaşım','Abonelik ve abonman','Fatura','Kira','Sağlık','Eğlence','Alışveriş','Eğitim','Diğer'];
+const today=()=>new Date().toISOString().slice(0,10);
+const money=n=>new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY',maximumFractionDigits:0}).format(Number(n)||0);
+const parse=n=>Number(String(n||'').replace(',','.'))||0;
+let db=load();
+function load(){try{let x=JSON.parse(localStorage.getItem(KEY))||{};return {tx:x.tx||[],plans:x.plans||[],accounts:x.accounts||[],cards:x.cards||[],payments:x.payments||[],budgets:x.budgets||[],subs:x.subs||[],goals:x.goals||[]}}catch(e){return {tx:[],plans:[],accounts:[],cards:[],payments:[],budgets:[],subs:[],goals:[]}}}
+function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}
+function id(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function dateAddMonths(date,months){let d=new Date(date+'T12:00:00');d.setMonth(d.getMonth()+months);return d.toISOString().slice(0,10)}
+function daysBetween(a,b){return Math.max(0,Math.ceil((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000))}
+function show(s){document.querySelectorAll('.screen').forEach(x=>x.classList.toggle('active',x.id===s));document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.screen===s));window.scrollTo(0,0);render()}
+function fillSelects(){['txCategory','budgetCategory'].forEach(id=>document.getElementById(id).innerHTML=cats.map(c=>`<option>${c}</option>`).join(''));let opts=db.accounts.map(a=>`<option value="${a.id}">${esc(a.name)} (${a.type})</option>`).join('')||'<option value="">Önce hesap ekle</option>';txAccount.innerHTML=opts;quickAccount.innerHTML=opts;cardAccount.innerHTML=db.accounts.filter(a=>a.type==='Kredi kartı').map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')||'<option value="">Önce kredi kartı hesabı ekle</option>';payCard.innerHTML=db.cards.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')||'<option value="">Kart tanımla</option>';payBank.innerHTML=db.accounts.filter(a=>a.type!=='Kredi kartı').map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')||'<option value="">Önce banka hesabı ekle</option>';}
+function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function addTransaction(typeOverride){let type=typeOverride||document.getElementById('txType').value,amount=parse(document.getElementById('txAmount').value),name=document.getElementById('txName').value.trim();if(!amount||!name){alert('Tutar ve açıklama gerekli.');return}
+let acc=db.accounts.find(a=>a.id===document.getElementById('txAccount').value);
+if(acc){if(acc.type==='Kredi kartı') acc.balance += (type==='expense'?amount:-amount); else acc.balance += (type==='income'?amount:-amount)}
+db.tx.unshift({id:id(),type,amount,name,category:document.getElementById('txCategory').value||'Diğer',account:document.getElementById('txAccount').value,date:document.getElementById('txDate').value||today()});
+document.getElementById('txAmount').value='';document.getElementById('txName').value='';save()}
+function quickAdd(){let raw=quickEntry.value.trim(),m=raw.match(/^([0-9]+(?:[.,][0-9]{1,2})?)\s*(?:₺|tl|lira)?\s*(.*?)$/i),amount=m?parse(m[1]):0,name=m?m[2].trim():'';if(!amount||!name){alert('Örneğin “15 TL su” şeklinde tutar ve açıklama gir.');return}
+let cat='Diğer',s=name.toLocaleLowerCase('tr');if(s.includes('su'))cat='Gıda / Su';else if(s.includes('kahve'))cat='Gıda / Kahve';else if(s.includes('yemek'))cat='Gıda / Yemek';
+let acc=db.accounts.find(a=>a.id===quickAccount.value);if(acc){if(acc.type==='Kredi kartı')acc.balance+=amount;else acc.balance-=amount}
+db.tx.unshift({id:id(),type:'expense',amount,name,category:cat,account:acc?.id||'',date:today()});quickEntry.value='';save()}
+function addPlan(){let amount=parse(planAmount.value),name=planName.value.trim(),date=planDate.value;if(!amount||!name||!date){alert('Tutar, açıklama ve tarih gerekli.');return}db.plans.push({id:id(),type:planType.value,amount,name,date,repeat:planRepeat.value});planAmount.value='';planName.value='';save()}
+function addAccount(){let name=accountName.value.trim(),balance=parse(accountBalance.value);if(!name){alert('Hesap adı gerekli.');return}db.accounts.push({id:id(),name,type:accountType.value,balance});accountName.value='';accountBalance.value='';save()}
+function addCard(){let name=cardName.value.trim(),close=Number(cardClose.value),due=Number(cardDue.value),accountId=cardAccount.value;if(!name||close<1||close>31||due<1||due>31||!accountId){alert('Kart adı, kart hesabı ve geçerli kesim/ödeme günleri gerekli. Önce Hesaplar bölümünden kredi kartı hesabı oluştur.');return}if(db.cards.some(c=>c.accountId===accountId)){alert('Bu hesap zaten bir karta bağlı.');return}db.cards.push({id:id(),name,close,due,accountId});cardName.value='';cardClose.value='';cardDue.value='';save()}
+function payCardBill(){let c=db.cards.find(x=>x.id===payCard.value),cardAcc=c&&db.accounts.find(a=>a.id===c.accountId),bank=db.accounts.find(a=>a.id===payBank.value),amount=parse(payAmount.value),date=payDate.value||today();if(!c||!cardAcc||!bank||bank.type==='Kredi kartı'||!amount||amount<=0){alert('Kart, banka hesabı ve geçerli ödeme tutarı gerekli.');return}let statements=statementList(c,date).filter(st=>st.amount>0).sort((a,b)=>a.dueDate.localeCompare(b.dueDate)),outstanding=statements.reduce((sum,st)=>sum+st.amount,0);if(amount>outstanding+0.009){alert('Açık ekstre borcundan fazla ödeme giremezsin. Açık ekstre toplamı: '+money(outstanding));return}if(amount>bank.balance){alert('Banka hesabında bu ödeme için yeterli bakiye yok.');return}bank.balance-=amount;cardAcc.balance=Math.max(0,cardAcc.balance-amount);let remaining=amount;for(const st of statements){if(remaining<=0)break;let part=Math.min(remaining,st.amount);db.payments.push({id:id(),cardId:c.id,amount:part,date,statementKey:st.key,bankAccountId:bank.id});remaining-=part}payAmount.value='';save()}
+function addBudget(){let category=budgetCategory.value,amount=parse(budgetAmount.value);if(!amount)return;db.budgets=db.budgets.filter(x=>x.category!==category);db.budgets.push({category,amount});budgetAmount.value='';save()}
+function addSubscription(){let name=subName.value.trim(),amount=parse(subAmount.value),day=Number(subDay.value);if(!name||!amount||day<1||day>31){alert('Ad, tutar ve 1–31 arasında ödeme günü gerekli.');return}db.subs.push({id:id(),name,amount,day});subName.value='';subAmount.value='';subDay.value='';save()}
+function addGoal(){let name=goalName.value.trim(),target=parse(goalTarget.value),saved=parse(goalSaved.value);if(!name||!target)return;db.goals.push({id:id(),name,target,saved});goalName.value='';goalTarget.value='';goalSaved.value='';save()}
+function del(collection,idv){if(collection==='tx'){let t=db.tx.find(x=>x.id===idv),a=t&&db.accounts.find(x=>x.id===t.account);if(a){if(a.type==='Kredi kartı')a.balance+=(t.type==='expense'?-t.amount:t.amount);else a.balance+=(t.type==='income'?-t.amount:t.amount)}}if(collection==='payments'){let p=db.payments.find(x=>x.id===idv),b=p&&db.accounts.find(x=>x.id===p.bankAccountId),c=p&&db.cards.find(x=>x.id===p.cardId),ca=c&&db.accounts.find(x=>x.id===c.accountId);if(b)b.balance+=p.amount;if(ca)ca.balance+=p.amount}db[collection]=db[collection].filter(x=>x.id!==idv);save()}
+function dayDate(year,month,day){return new Date(year,month,Math.min(day,new Date(year,month+1,0).getDate()),12).toISOString().slice(0,10)}
+function latestClose(card,ref){let d=new Date(ref+'T12:00:00'),y=d.getFullYear(),m=d.getMonth(),candidate=dayDate(y,m,card.close);if(candidate>ref){m--;if(m<0){m=11;y--}candidate=dayDate(y,m,card.close)}return candidate}
+function statementList(card,ref=today()){let txs=db.tx.filter(t=>t.account===card.accountId&&t.type==='expense'&&t.date<=ref).sort((a,b)=>a.date.localeCompare(b.date));if(!txs.length)return [];let first=new Date(txs[0].date+'T12:00:00'),last=latestClose(card,ref),out=[];let y=first.getFullYear(),m=first.getMonth();for(let i=0;i<30;i++){let close=dayDate(y,m,card.close);if(close>last)break;let prevMonth=m-1,prevYear=y;if(prevMonth<0){prevMonth=11;prevYear--}let prev=dayDate(prevYear,prevMonth,card.close),start=new Date(prev+'T12:00:00');start.setDate(start.getDate()+1);let startDate=start.toISOString().slice(0,10),key=card.id+':'+close;let gross=txs.filter(t=>t.date>=startDate&&t.date<=close).reduce((sum,t)=>sum+t.amount,0);let paid=db.payments.filter(p=>p.statementKey===key).reduce((sum,p)=>sum+p.amount,0);let dueDate=dayDate(dueYear(close,card.due),dueMonth(close,card.due),card.due);if(gross>0)out.push({key,close,startDate,amount:Math.max(0,gross-paid),dueDate});m++;if(m>11){m=0;y++}}return out}
+function currentStatement(card,ref=today()){return statementList(card,ref).slice(-1)[0]||{key:card.id+':none',close:'',startDate:'',amount:0,dueDate:''}}
+function dueMonth(close,due){let d=new Date(close+'T12:00:00');return d.getDate()>=due?d.getMonth()+1:d.getMonth()}function dueYear(close,due){let d=new Date(close+'T12:00:00'),m=dueMonth(close,due);return d.getFullYear()+(m>11?1:0)}
+function eventList(){let arr=[],now=today(),end=dateAddMonths(now,2);db.plans.forEach(p=>{if(p.repeat==='monthly'){let d=p.date;while(d<now)d=dateAddMonths(d,1);for(let i=0;i<3&&d<=end;i++,d=dateAddMonths(d,1))arr.push({...p,date:d,id:p.id+'_'+d})}else if(p.date>=now&&p.date<=end)arr.push({...p})});
+db.cards.forEach(c=>{statementList(c,now).forEach(st=>{if(st.amount>0&&st.dueDate<=end)arr.push({id:'statement'+st.key,type:'expense',amount:st.amount,name:c.name+' ekstre ödemesi',date:st.dueDate})})});
+db.subs.forEach(s=>{let base=new Date(now+'T12:00:00');for(let i=0;i<3;i++){let y=base.getFullYear(),m=base.getMonth()+i,date=dayDate(y,m,s.day);if(date>=now&&date<=end)arr.push({id:'sub'+s.id+'_'+date,type:'expense',amount:s.amount,name:s.name+' (abonelik)',date})}});
+return arr.sort((a,b)=>a.date.localeCompare(b.date))}
+function render(){fillSelects();let now=today(),events=eventList(),balance=db.accounts.filter(a=>a.type!=='Kredi kartı').reduce((s,a)=>s+a.balance,0);
+let futureIncome=events.filter(e=>e.type==='income'&&e.date>=now),next=futureIncome[0],nextDate=next?.date||dateAddMonths(now,1);
+let before=events.filter(e=>e.type==='expense'&&e.date<=nextDate).reduce((s,e)=>s+e.amount,0);
+let plannedIn=events.filter(e=>e.type==='income'&&e.date<=nextDate).reduce((s,e)=>s+e.amount,0);
+let capacity=balance+plannedIn-before;
+let days=Math.max(1,daysBetween(now,nextDate)+1),spent=db.tx.filter(t=>t.type==='expense'&&t.date.slice(0,7)===now.slice(0,7)).reduce((s,t)=>s+t.amount,0);
+document.getElementById('monthLabel').textContent=new Date().toLocaleDateString('tr-TR',{month:'long',year:'numeric'});
+document.getElementById('capacity').textContent=money(capacity);document.getElementById('capacity').style.color=capacity<0?'#ffaaaa':'#fff';
+document.getElementById('capacityCaption').textContent=next?'Öngörülen gelir ve bu tarihe kadarki planlı ödemeler sonrası':'Bir sonraki gelir tarihini eklediğinde dönem hesabı netleşir.';
+document.getElementById('totalBalance').textContent=money(balance);document.getElementById('nextIncome').textContent=next?money(next.amount):'—';document.getElementById('nextIncomeDate').textContent=next?new Date(next.date+'T12:00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long'}):'Planlı gelir yok';
+document.getElementById('upcomingDue').textContent=money(events.filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0));document.getElementById('dailyLimit').textContent=money(Math.max(0,capacity)/days);document.getElementById('dailyCaption').textContent=`${days} günlük dönem · gerçekleşen harcama hariç`;
+document.getElementById('timeline').innerHTML=events.length?events.slice(0,7).map(e=>`<div class="row"><div><b>${esc(e.name)}</b><small>${new Date(e.date+'T12:00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'short'})}</small></div><div class="amount ${e.type==='income'?'positive':'negative'}">${e.type==='income'?'+':'−'}${money(e.amount)}</div></div>`).join(''):'<div class="empty">Henüz planlı gelir veya ödeme yok.</div>';
+let txhtml=db.tx.slice(0,6).map(t=>`<div class="row"><div><b>${esc(t.name)}</b><small>${esc(t.category)} · ${t.date}</small></div><div class="amount ${t.type==='income'?'positive':'negative'}">${t.type==='income'?'+':'−'}${money(t.amount)}</div></div>`).join('')||'<div class="empty">Henüz işlem yok.</div>';recent.innerHTML=txhtml;allTransactions.innerHTML=db.tx.map(t=>`<div class="row"><div><b>${esc(t.name)}</b><small>${esc(t.category)} · ${t.date}</small></div><div style="text-align:right"><div class="amount ${t.type==='income'?'positive':'negative'}">${t.type==='income'?'+':'−'}${money(t.amount)}</div><button class="link" onclick="del('tx','${t.id}')">Sil</button></div></div>`).join('')||'<div class="empty">İşlem bulunmuyor.</div>';
+plans.innerHTML=db.plans.map(p=>`<div class="row"><div><b>${esc(p.name)}</b><small>${p.date} · ${p.repeat==='monthly'?'Her ay':'Tek seferlik'}</small></div><div>${money(p.amount)} <button class="link" onclick="del('plans','${p.id}')">Sil</button></div></div>`).join('')||'<div class="empty">Plan eklenmedi.</div>';
+accountsList.innerHTML=db.accounts.map(a=>`<div class="row"><div><b>${esc(a.name)}</b><small>${a.type}</small></div><div class="amount">${money(a.balance)} <button class="link" onclick="del('accounts','${a.id}')">Sil</button></div></div>`).join('')||'<div class="empty">Önce nakit ve banka hesaplarını ekle.</div>';
+cards.innerHTML=db.cards.map(c=>{let st=statementList(c,now),a=db.accounts.find(x=>x.id===c.accountId),open=st.reduce((sum,x)=>sum+x.amount,0),last=st.slice(-1)[0];return `<div class="row"><div><b>${esc(c.name)}</b><small>Kesim: her ayın ${c.close}’i · Son ödeme: her ayın ${c.due}’i · Güncel kart borcu: ${money(a?.balance||0)}</small><small>Açık ekstreler: ${money(open)} · Son kesim: ${last?.close||'—'}</small></div><button class="link" onclick="del('cards','${c.id}')">Sil</button></div>`}).join('')||'<div class="empty">Kart tanımlanmadı.</div>';
+cardPayments.innerHTML=db.payments.slice().reverse().map(p=>{let c=db.cards.find(x=>x.id===p.cardId);return `<div class="row"><div><b>${esc(c?.name||'Silinmiş kart')} ödemesi</b><small>${p.date}</small></div><div>${money(p.amount)} <button class="link" onclick="del('payments','${p.id}')">Geri al</button></div></div>`}).join('');
+budgets.innerHTML=db.budgets.map(b=>{let used=db.tx.filter(t=>t.type==='expense'&&t.category===b.category&&t.date.slice(0,7)===now.slice(0,7)).reduce((s,t)=>s+t.amount,0),pct=Math.min(100,used/b.amount*100);return `<div class="row" style="display:block"><div style="display:flex;justify-content:space-between"><b>${esc(b.category)}</b><span>${money(used)} / ${money(b.amount)}</span></div><div class="bar"><span style="width:${pct}%"></span></div></div>`}).join('')||'<div class="empty">Henüz kategori limiti yok.</div>';
+subs.innerHTML=db.subs.map(s=>`<div class="row"><div><b>${esc(s.name)}</b><small>Her ayın ${s.day}’i</small></div><div>${money(s.amount)} <button class="link" onclick="del('subs','${s.id}')">Sil</button></div></div>`).join('')||'<div class="empty">Abonelik eklenmedi.</div>';
+goals.innerHTML=db.goals.map(g=>`<div class="row"><div><b>${esc(g.name)}</b><small>${money(g.saved)} / ${money(g.target)}</small></div><div>${Math.round(g.saved/g.target*100)}% <button class="link" onclick="del('goals','${g.id}')">Sil</button></div></div>`).join('')||'<div class="empty">Birikim hedefi eklenmedi.</div>';
+categoryList.innerHTML=cats.map(c=>`<div class="row"><span>${esc(c)}</span><span class="pill">${c.startsWith('Gıda')?'Gıda':'Kategori'}</span></div>`).join('');
+}
+function exportData(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='denge-yedek-'+today()+'.json';a.click();URL.revokeObjectURL(a.href)}
+function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.tx||!x.accounts)throw 0;db=x;save();alert('Yedek yüklendi.')}catch(_){alert('Dosya geçerli bir Denge yedeği değil.')}};r.readAsText(f)}
+txDate.value=today();planDate.value=today();payDate.value=today();render();
+</script>
+<script>if ("serviceWorker" in navigator) { window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {})); }</script>
+</body></html>
